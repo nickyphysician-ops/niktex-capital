@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Niktex Capital Trading</title>
+    <style>
+        body { background-color: #020617; color: #f8fafc; font-family: sans-serif; min-height: 100vh; margin: 0; padding: 0; }
+        header { background-color: #0f172a; border-bottom: 2px solid #b45309; padding: 24px; display: flex; justify-content: space-between; align-items: center; }
+        h1 { color: #fbbf24; margin: 0; font-size: 24px; }
+        .status { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+        .badge { background-color: #1e293b; color: #fbbf24; padding: 8px 16px; border-radius: 8px; border: 1px solid #334155; font-size: 14px; font-weight: bold; font-family: monospace; }
+        main { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; padding: 24px; }
+        @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+        .card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; }
+        .price-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        h2 { font-size: 18px; color: #cbd5e1; margin: 0; }
+        .price { font-size: 24px; font-weight: bold; color: #fbbf24; font-family: monospace; }
+        .chart-container { background-color: #020617; border: 1px solid #1e293b; border-radius: 8px; height: 200px; display: flex; justify-content: center; align-items: center; color: #475569; position: relative; margin-bottom: 20px; text-align: center; }
+        .wallet-box { background-color: #020617; border: 1px solid #b45309; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+        .wallet-title { font-size: 12px; color: #b45309; text-transform: uppercase; font-weight: bold; margin: 0; }
+        .balance { font-size: 32px; font-weight: bold; color: #fbbf24; margin: 8px 0 0 0; font-family: monospace; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
+        input { width: 90%; background-color: #020617; border: 1px solid #334155; border-radius: 8px; padding: 10px; color: #f8fafc; font-family: monospace; font-size: 14px; }
+        button { width: 100%; background: linear-gradient(to right, #f59e0b, #d97706); color: #020617; font-weight: bold; font-size: 14px; border: none; padding: 12px; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+        .btn-buy { background: linear-gradient(to right, #10b981, #059669); color: white; }
+        .btn-sell { background: linear-gradient(to right, #ef4444, #dc2626); color: white; }
+        .ledger-section { grid-column: 1 / -1; background-color: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 24px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+        th { padding: 12px; color: #94a3b8; background-color: #020617; border-bottom: 1px solid #1e293b; text-align: left; font-size: 11px; letter-spacing: 0.5px; }
+        td { padding: 12px; border-bottom: 1px solid #1e293b; font-family: monospace; color: #e2e8f0; }
+        .txt-green { color: #10b981; }
+        .txt-red { color: #f43f5e; }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Welcome to Niktex Capital Trading!</h1>
+            <div class="status">Market Status: <span style="color: #f59e0b;">● Executive Data Stream Live</span></div>
+        </div>
+        <div class="badge">Nikman Premium Account</div>
+    </header>
+    <main>
+        <div class="card">
+            <div class="price-header"><h2>Premium Asset Chart (USD / KES)</h2><div id="live-price" class="price">129.45 KES</div></div>
+            <div class="chart-container">
+                <div style="font-family: monospace; color: #fbbf24;">[ Real-time Trading Metrics Active ]<br><span style="font-size: 12px; color: #64748b;">Simulating live currency indexes...</span></div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <button onclick="executeTrade('BUY')" class="btn-buy">BUY / LONG</button>
+                <button onclick="executeTrade('SELL')" class="btn-sell">SELL / SHORT</button>
+            </div>
+        </div>
+        <div class="card">
+            <div>
+                <h2>Institutional Portfolio Wallet</h2>
+                <div class="wallet-box"><p class="wallet-title">Available Capital Balance</p><p id="wallet-balance" class="balance">KES 0.00</p></div>
+                <div class="form-group"><label>Safcom M-Pesa Phone Number</label><input id="phone-input" type="text" placeholder="2547XXXXXXXX"></div>
+                <div class="form-group"><label>Deposit Amount (KES)</label><input id="amount-input" type="number" placeholder="1000"></div>
+                <button onclick="triggerMpesaDeposit()">Initialize Capital Deposit</button>
+            </div>
+        </div>
+        <div class="ledger-section">
+            <h2>Live Portfolio Activity Ledger</h2>
+            <table>
+                <thead><tr><th>Timestamp</th><th>Reference ID</th><th>Action Type</th><th>Amount Matrix</th><th>Status</th></tr></thead>
+                <tbody id="ledger-body"><tr><td>--:--:--</td><td>SYSTEM_INIT</td><td>LEDGER_OPEN</td><td>KES 0.00</td><td class="txt-green">SETTLED</td></tr></tbody></table>
+        </div>
+    </main>
+    <script>
+        let currentPrice = 129.45; let totalBalance = 0.00;
+        setInterval(() => {
+            let change = (Math.random() - 0.5) * 0.15;
+            currentPrice = parseFloat((currentPrice + change).toFixed(2));
+            document.getElementById('live-price').innerText = currentPrice + ' KES';
+        }, 3000);
+        async function triggerMpesaDeposit() {
+            const phone = document.getElementById('phone-input').value;
+            const amt = document.getElementById('amount-input').value;
+            if(!phone || !amt) { alert('Please enter phone and amount.'); return; }
+            try {
+                const response = await fetch('/api/v1/payments/stk-push', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone_number: phone, amount: parseFloat(amt) })
+                });
+                const data = await response.json();
+                alert(data.message);
+                if(data.status === 'Success') {
+                    totalBalance += parseFloat(amt);
+                    document.getElementById('wallet-balance').innerText = 'KES ' + totalBalance.toLocaleString('en-US', {minimumFractionDigits: 2});
+                    addLedgerRow(data.ref_id, 'MPESA_DEPOSIT', 'KES +' + parseFloat(amt).toLocaleString(), 'SETTLED', 'txt-green');
+                }
+            } catch (error) { alert('API Error.'); }
+        }
+        function executeTrade(type) {
+            if (totalBalance <= 0) { alert('Please top up your wallet via M-Pesa first.'); return; }
+            let tradeAmount = 500; let ref = 'TX_' + Math.random().toString(36).substring(2, 9).toUpperCase();
+            let colorClass = type === 'BUY' ? 'txt-green' : 'txt-red';
+            addLedgerRow(ref, type, 'KES ' + tradeAmount.toLocaleString(), 'RUNNING', colorClass);
+        }
+        function addLedgerRow(ref, action, amount, status, styleClass) {
+            const body = document.getElementById('ledger-body'); const row = document.createElement('tr'); let time = new Date().toLocaleTimeString();
+            row.innerHTML = `<td>${time}</td><td>${ref}</td><td class="${styleClass}">${action}</td><td>${amount}</td><td class="txt-green">${status}</td>`;
+            body.insertBefore(row, body.firstChild);
+        }
+    </script>
+</body>
+</html>
